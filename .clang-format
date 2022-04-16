@@ -1,0 +1,27 @@
+IndentAccessModifiers: true
+AlignTrailingComments: true
+AllowShortFunctionsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: true
+AllowShortLoopsOnASingleLine: true
+BreakBeforeBinaryOperators: false
+IndentWidth: 4
+SortIncludes: false
+NamespaceIndentation: All
+AlignConsecutiveAssignments: true
+AllowShortEnumsOnASingleLine: false
+IndentCaseBlocks: true
+IndentCaseLabels: true
+BraceWrapping:
+  AfterClass:      true
+  AfterControlStatement: true
+  AfterEnum:       true
+  AfterFunction:   true
+  AfterNamespace:  true
+  AfterObjCDeclaration: true
+  AfterStruct:     true
+  AfterUnion:      true
+  BeforeCatch:     true
+  BeforeElse:      true
+  IndentBraces:    false
+BreakBeforeBraces: Custom
+
