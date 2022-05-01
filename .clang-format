@@ -24,4 +24,6 @@ BraceWrapping:
   BeforeElse:      true
   IndentBraces:    false
 BreakBeforeBraces: Custom
+AlignConsecutiveMacros: true
+AlignConsecutiveDeclarations: true
 
