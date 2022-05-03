@@ -22,7 +22,7 @@ void Logging::initLogger(string fileName, bool auto_flush)
 
         sink->locked_backend()->add_stream(strm);
         sink->set_formatter(
-            expr::format("[%1%][%2%][%3%] : %4%") %
+            expr::format("[%1%] [%2%] <%3%> : %4%") %
             expr::format_date_time<boost::posix_time::ptime>("TimeStamp",
                                                              "%H:%M:%S.%f") %
             expr::attr<attrs::current_thread_id::value_type>("ThreadID") %
