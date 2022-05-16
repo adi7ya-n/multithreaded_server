@@ -48,6 +48,10 @@ BOOST_LOG_INLINE_GLOBAL_LOGGER_DEFAULT(
 
 #define lg logger::get()
 
+#define LOG_INF SERVER_LOG(lg, INFO)
+#define LOG_DBG SERVER_LOG(lg, DEBUG)
+#define LOG_ERR SERVER_LOG(lg, ERR)
+
 namespace Logging
 {
     typedef sinks::text_ostream_backend backend_t;
@@ -57,8 +61,8 @@ namespace Logging
             unsigned int, std::less<unsigned int>>>>
         sink_t;
 
-    void                      initLogger(string fileName, bool autoFlush=false);
-    void                      flushLogs();
+    void initLogger(string fileName, bool autoFlush = false);
+    void flushLogs();
     extern shared_ptr<sink_t> sink;
 } // namespace Logging
 

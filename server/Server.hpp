@@ -41,7 +41,7 @@ class PlayerHandler : public boost::enable_shared_from_this<PlayerHandler>
         {
             sendMsg(PacketType::CONN_PACKET, MsgType::USERNAME_REQUEST,
                     [this](err const &error, std::size_t bytes_transferred) {
-                        SERVER_LOG(lg, DEBUG)
+                        LOG_DBG
                             << "Successfully sent username request to ("
                             << _socket.remote_endpoint().address().to_string()
                             << " ,"
@@ -51,17 +51,16 @@ class PlayerHandler : public boost::enable_shared_from_this<PlayerHandler>
                             _socket, _in_packet,
                             [this](err const  &error,
                                    std::size_t bytes_transferred) {
-                                SERVER_LOG(lg, DEBUG)
-                                    << "Received username from ("
-                                    << _socket.remote_endpoint()
-                                           .address()
-                                           .to_string()
-                                    << " ,"
-                                    << std::to_string(
-                                           _socket.remote_endpoint().port())
-                                    << ")."
-                                    << "read: " << bytes_transferred
-                                    << " bytes.";
+                                LOG_DBG << "Received username from ("
+                                        << _socket.remote_endpoint()
+                                               .address()
+                                               .to_string()
+                                        << " ,"
+                                        << std::to_string(
+                                               _socket.remote_endpoint().port())
+                                        << ")."
+                                        << "read: " << bytes_transferred
+                                        << " bytes.";
                                 setUserName();
                             });
                     });
@@ -85,7 +84,7 @@ class PlayerHandler : public boost::enable_shared_from_this<PlayerHandler>
         {
             std::istream stream(&_in_packet);
             stream >> _userName;
-            SERVER_LOG(lg, DEBUG) << _userName << " is ready to play.";
+            LOG_DBG << _userName << " is ready to play.";
             _gameReady = true;
         }
         bool inQueue()
@@ -213,7 +212,7 @@ void Server::startServer(uint16_t port)
     _port = port;
 
     initLogger("server.log", true);
-    SERVER_LOG(lg, INFO) << "Initializing server. Port: " << _port;
+    LOG_INF << "Initializing server. Port: " << _port;
 
     tcp::endpoint endpoint(tcp::v4(), _port);
     _acceptor.open(endpoint.protocol());
@@ -226,7 +225,7 @@ void Server::startServer(uint16_t port)
     for (auto i = 0; i < _thread_count; ++i)
     {
         _thread_pool.emplace_back([&] {
-            SERVER_LOG(lg, INFO) << "Worker thread spawned.";
+            LOG_INF << "Worker thread spawned.";
             while (1)
             {
                 _io_service.run();
@@ -279,16 +278,14 @@ void Server::handleNewConnection(shared_handler_t handler, err const &error)
         handleNewConnection(new_handler, ec);
     });
 
-    SERVER_LOG(lg, INFO)
-        << "Incoming connection from ("
-        << handler->socket().remote_endpoint().address().to_string() << ", "
-        << handler->socket().remote_endpoint().port() << ")";
+    LOG_INF << "Incoming connection from ("
+            << handler->socket().remote_endpoint().address().to_string() << ", "
+            << handler->socket().remote_endpoint().port() << ")";
     ;
     if (error)
     {
-        SERVER_LOG(lg, ERR)
-            << "Error while trying to handle new connection. Error: "
-            << error.message();
+        LOG_ERR << "Error while trying to handle new connection. Error: "
+                << error.message();
         return;
     }
 
@@ -302,8 +299,8 @@ void Server::handleNewConnection(shared_handler_t handler, err const &error)
 
 void Server::startGame(shared_handler_t player1, shared_handler_t player2)
 {
-    SERVER_LOG(lg, INFO) << "Starting game between " << player1->userName()
-                         << " and " << player2->userName();
+    LOG_INF << "Starting game between " << player1->userName() << " and "
+            << player2->userName();
 }
 
 /*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
