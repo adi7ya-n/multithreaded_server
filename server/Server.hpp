@@ -13,7 +13,7 @@ using namespace Network;
 
 /*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
-// Handler to accept new connection, add to a pool, before starting a game.
+// Handler to accept new connection, send and receive messages.
 class PlayerHandler : public boost::enable_shared_from_this<PlayerHandler>
 {
     private:
@@ -22,15 +22,14 @@ class PlayerHandler : public boost::enable_shared_from_this<PlayerHandler>
         asio::io_service::strand _write_strand;
         bool                     _gameReady;
         bool                     _inQueue;
+        bool                     _inGame;
         string                   _userName;
         asio::streambuf          _in_packet;
-        // std::stringstream       _streamBuffReader;
-        // std::deque<std::string>  _send_packet_queue;
 
     public:
         PlayerHandler(asio::io_service &service)
             : _service(service), _socket(service), _write_strand(service),
-              _gameReady(false), _inQueue(false)
+              _gameReady(false), _inQueue(false), _inGame(false)
         {
         }
         tcp::socket &socket()
@@ -39,31 +38,37 @@ class PlayerHandler : public boost::enable_shared_from_this<PlayerHandler>
         }
         void getUserName()
         {
-            sendMsg(PacketType::CONN_PACKET, MsgType::USERNAME_REQUEST,
-                    [this](err const &error, std::size_t bytes_transferred) {
-                        LOG_DBG
-                            << "Successfully sent username request to ("
+            sendMsg(
+                PacketType::CONN_PACKET, MsgType::USERNAME_REQUEST,
+                [this](err const &error, std::size_t bytes_transferred) {
+                    LOG_DBG << "Successfully sent username request to ("
                             << _socket.remote_endpoint().address().to_string()
                             << " ,"
                             << std::to_string(_socket.remote_endpoint().port())
                             << ").";
-                        asio::async_read(
-                            _socket, _in_packet,
-                            [this](err const  &error,
-                                   std::size_t bytes_transferred) {
-                                LOG_DBG << "Received username from ("
-                                        << _socket.remote_endpoint()
-                                               .address()
-                                               .to_string()
-                                        << " ,"
-                                        << std::to_string(
-                                               _socket.remote_endpoint().port())
-                                        << ")."
-                                        << "read: " << bytes_transferred
-                                        << " bytes.";
-                                setUserName();
-                            });
-                    });
+                    asio::async_read_until(
+                        _socket, _in_packet, '\n',
+                        [this](err const  &error,
+                               std::size_t bytes_transferred) {
+                            if (error)
+                            {
+                                LOG_ERR
+                                    << "Error during reception of username: "
+                                    << error.message();
+                            }
+                            LOG_DBG << "Received username from ("
+                                    << _socket.remote_endpoint()
+                                           .address()
+                                           .to_string()
+                                    << " ,"
+                                    << std::to_string(
+                                           _socket.remote_endpoint().port())
+                                    << ")."
+                                    << "read: " << bytes_transferred
+                                    << " bytes.";
+                            setUserName();
+                        });
+                });
         }
         void sendMsg(PacketType msg, uint8_t data,
                      std::function<void(err, std::size_t)> cb)
@@ -83,7 +88,7 @@ class PlayerHandler : public boost::enable_shared_from_this<PlayerHandler>
         void setUserName()
         {
             std::istream stream(&_in_packet);
-            stream >> _userName;
+            std::getline(stream, _userName);
             LOG_DBG << _userName << " is ready to play.";
             _gameReady = true;
         }
@@ -94,6 +99,14 @@ class PlayerHandler : public boost::enable_shared_from_this<PlayerHandler>
         bool gameReady()
         {
             return (_gameReady == true);
+        }
+        bool inGame()
+        {
+            return (_inGame == true);
+        }
+        void setInGame(bool inGame)
+        {
+            _inGame = inGame;
         }
         string &userName()
         {
@@ -110,28 +123,27 @@ class PlayerHandler : public boost::enable_shared_from_this<PlayerHandler>
 class TS_List
 {
     private:
-        unique_ptr<std::list<shared_ptr<PlayerHandler>>> _list;
-        mutex                                            _listLock;
+        std::list<shared_ptr<PlayerHandler>> _list;
+        mutex                                _listLock;
 
     public:
         TS_List()
         {
-            _list = make_unique<std::list<shared_ptr<PlayerHandler>>>();
         }
         void insert(shared_ptr<PlayerHandler> handler)
         {
             const lock_guard<mutex> lock(_listLock);
-            _list->push_back(handler);
+            _list.push_back(handler);
         }
         std::list<shared_ptr<PlayerHandler>>::iterator
         remove(std::list<shared_ptr<PlayerHandler>>::iterator it)
         {
             const lock_guard<mutex> lock(_listLock);
-            return _list->erase(it);
+            return _list.erase(it);
         }
         std::list<shared_ptr<PlayerHandler>> &data()
         {
-            return *_list;
+            return _list;
         }
 };
 
@@ -153,14 +165,14 @@ class TS_Queue
             const lock_guard<mutex> lock(_queueLock);
             _queue.push(handler);
         }
-        shared_ptr<PlayerHandler> pop()
+        weak_ptr<PlayerHandler> pop()
         {
             const lock_guard<mutex> lock(_queueLock);
             auto                    handler = first();
             _queue.pop();
             return handler;
         }
-        shared_ptr<PlayerHandler> first()
+        weak_ptr<PlayerHandler> first()
         {
             // const lock_guard<mutex> lock(_queueLock);
             return _queue.front();
@@ -179,8 +191,6 @@ class TS_Queue
 
 class Server
 {
-        using shared_handler_t = shared_ptr<PlayerHandler>;
-
     private:
         uint16_t         _port;
         uint8_t          _thread_count;
@@ -197,10 +207,10 @@ class Server
         }
 
         void startServer(uint16_t port);
-        void handleNewConnection(shared_handler_t handler, err const &error);
-        // void newPlayer();
-        void startGame(shared_handler_t player1, shared_handler_t player2);
-        // void sendMessage();
+        void handleNewConnection(shared_ptr<PlayerHandler> handler,
+                                 err const                &error);
+        void startGame(shared_ptr<PlayerHandler> &player1,
+                       shared_ptr<PlayerHandler> &player2);
 };
 
 /*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
@@ -236,30 +246,29 @@ void Server::startServer(uint16_t port)
     thread incomingClientProcessor([&]() {
         while (1)
         {
-            auto it = _clientHandlers.data().begin();
-            while (it != _clientHandlers.data().end())
+            auto end = _clientHandlers.data().end();
+            auto it  = _clientHandlers.data().begin();
+
+            while (it != end)
             {
-                if ((*it)->gameReady())
+                if ((*it)->gameReady() and !(*it)->inGame())
                 {
-                    _gameReadyPlayers.insert(*it);
-                    it = _clientHandlers.remove(it);
+                    shared_ptr<PlayerHandler> player1 = *it;
+                    it++;
+                    while (it != end)
+                    {
+                        if ((*it)->gameReady() and !(*it)->inGame())
+                        {
+                            startGame(player1, *it);
+                            it++;
+                            break;
+                        }
+                        else
+                            it++;
+                    }
                 }
                 else
-                {
                     it++;
-                }
-            }
-        }
-    });
-
-    thread gameScheduler([&]() {
-        while (1)
-        {
-            if (_gameReadyPlayers.size() >= 2)
-            {
-                auto handler1 = _gameReadyPlayers.pop();
-                auto handler2 = _gameReadyPlayers.pop();
-                startGame(handler1, handler2);
             }
         }
     });
@@ -271,7 +280,8 @@ void Server::startServer(uint16_t port)
 
 /*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
-void Server::handleNewConnection(shared_handler_t handler, err const &error)
+void Server::handleNewConnection(shared_ptr<PlayerHandler> handler,
+                                 err const                &error)
 {
     auto new_handler = boost::make_shared<PlayerHandler>(_io_service);
     _acceptor.async_accept(new_handler->socket(), [=](auto ec) {
@@ -281,7 +291,7 @@ void Server::handleNewConnection(shared_handler_t handler, err const &error)
     LOG_INF << "Incoming connection from ("
             << handler->socket().remote_endpoint().address().to_string() << ", "
             << handler->socket().remote_endpoint().port() << ")";
-    ;
+
     if (error)
     {
         LOG_ERR << "Error while trying to handle new connection. Error: "
@@ -290,17 +300,22 @@ void Server::handleNewConnection(shared_handler_t handler, err const &error)
     }
 
     _clientHandlers.insert(handler);
-
     handler->getUserName();
-    // handler->sendMsg(PacketType::CONN_PACKET, MsgType::USERNAME_REQUEST);
 }
 
 /*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
-void Server::startGame(shared_handler_t player1, shared_handler_t player2)
+void Server::startGame(shared_ptr<PlayerHandler> &player1,
+                       shared_ptr<PlayerHandler> &player2)
 {
     LOG_INF << "Starting game between " << player1->userName() << " and "
             << player2->userName();
+
+    LOG_INF << "player1.use_count: " << player1.use_count() << " "
+            << "Player2.use_count: " << player2.use_count();
+
+    player1->setInGame(true);
+    player2->setInGame(true);
 }
 
 /*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
