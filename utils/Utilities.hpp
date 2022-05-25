@@ -29,6 +29,6 @@ using err = boost::system::error_code;
 
 using std::unique_ptr, std::make_unique, std::vector, std::thread, std::mutex,
     std::lock_guard, std::pair, std::make_pair, std::remove_if, std::array,
-    std::atomic, std::queue, std::bitset, std::string, std::cout;
+    std::atomic, std::queue, std::bitset, std::string, std::cout, boost::weak_ptr;
 
 #endif

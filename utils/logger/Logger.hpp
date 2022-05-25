@@ -32,8 +32,6 @@ namespace expr     = logging::expressions;
 namespace keywords = logging::keywords;
 namespace trivial  = logging::trivial;
 
-#define SERVER_LOG BOOST_LOG_SEV
-
 #define INFO  trivial::severity_level::info
 #define DEBUG trivial::severity_level::debug
 #define TRACE trivial::severity_level::trace
@@ -48,9 +46,9 @@ BOOST_LOG_INLINE_GLOBAL_LOGGER_DEFAULT(
 
 #define lg logger::get()
 
-#define LOG_INF SERVER_LOG(lg, INFO)
-#define LOG_DBG SERVER_LOG(lg, DEBUG)
-#define LOG_ERR SERVER_LOG(lg, ERR)
+#define LOG_INF BOOST_LOG_SEV(lg, INFO)
+#define LOG_DBG BOOST_LOG_SEV(lg, DEBUG)
+#define LOG_ERR BOOST_LOG_SEV(lg, ERR)
 
 namespace Logging
 {
