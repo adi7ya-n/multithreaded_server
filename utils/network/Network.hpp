@@ -8,7 +8,7 @@ using namespace Game;
 namespace Network
 {
     /*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-    class Session
+    /*class Session
     {
             uint32_t _sessionId;
             Player   _player1, _player2;
@@ -21,7 +21,7 @@ namespace Network
                 _player1.setIdentity(PlayerIdentifier::X);
                 _player2.setIdentity(PlayerIdentifier::O);
             }
-    };
+    };*/
 
     /*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
@@ -102,7 +102,7 @@ namespace Network
                 case MsgType::PLAYER2_INDICATION:
                     break;
                 default:
-                    SERVER_LOG(lg, ERR) << "Packet error: " << to_string(type)
+                    LOG_ERR << "Packet error: " << to_string(type)
                                         << " " << to_string(data);
                     return false;
             }
@@ -117,7 +117,7 @@ namespace Network
                 case MsgType::GET_GAME_INFO:
                     break;
                 default:
-                    SERVER_LOG(lg, ERR) << "Packet error: " << to_string(type)
+                    LOG_ERR << "Packet error: " << to_string(type)
                                         << " " << to_string(data);
                     return false;
             }
@@ -130,14 +130,14 @@ namespace Network
                 case PlayerIdentifier::O:
                     break;
                 default:
-                    SERVER_LOG(lg, ERR) << "Packet error: " << to_string(type)
+                    LOG_ERR << "Packet error: " << to_string(type)
                                         << " " << to_string(data);
                     return false;
             }
         }
         else
         {
-            SERVER_LOG(lg, ERR) << "Packet error: " << to_string(type) << " "
+            LOG_ERR << "Packet error: " << to_string(type) << " "
                                 << to_string(data);
             return false;
         }
