@@ -2,4 +2,5 @@ tags*
 *.log
 *.out
 *.o
+README.md
 .vscode/
