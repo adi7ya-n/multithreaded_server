@@ -1,30 +1,12 @@
 #ifndef NETWORK_HPP
 #define NETWORK_HPP
 
-#include "../../game/Game.hpp"
-#include "../Utilities.hpp"
+#include "Game.hpp"
+#include "Utilities.hpp"
 
 using namespace Game;
 namespace Network
 {
-    /*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-    /*class Session
-    {
-            uint32_t _sessionId;
-            Player   _player1, _player2;
-            Board    _board;
-
-        public:
-            Session()
-            {
-                _sessionId = 0u;
-                _player1.setIdentity(PlayerIdentifier::X);
-                _player2.setIdentity(PlayerIdentifier::O);
-            }
-    };*/
-
-    /*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-
     enum class PacketType : uint8_t
     {
         CONN_PACKET  = 0xAA,

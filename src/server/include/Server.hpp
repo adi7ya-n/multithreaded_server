@@ -1,15 +1,17 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include "../utils/Utilities.hpp"
-#include "../utils/logger/Logger.hpp"
-#include "../utils/network/Network.hpp"
+#include "Utilities.hpp"
+#include "Logger.hpp"
+#include "Network.hpp"
 
 #define THREAD_COUNT           5
 #define MAXIMUM_NUM_OF_PLAYERS 10000
 
 using namespace Logging;
 using namespace Network;
+
+shared_ptr<sink_t> Logging::sink;
 
 /*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
