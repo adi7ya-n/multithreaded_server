@@ -1,0 +1,6 @@
+add_subdirectory(logger)
+add_subdirectory(engine)
+add_executable(${PROJECT_NAME} main.cpp)
+target_link_libraries(${PROJECT_NAME} PUBLIC logger)
+target_link_libraries(${PROJECT_NAME} PUBLIC server)
+target_link_options(${PROJECT_NAME} PUBLIC -lboost_log -lboost_thread)
