@@ -43,7 +43,7 @@ namespace GameLib
     enum PacketType : uint8_t
     {
         CONN_PACKET  = 170,
-        DATA_PACKET  = 187,
+        DATA_PACKET  = 255,
         ADMIN_PACKET = 204
     };
 
@@ -64,11 +64,9 @@ namespace GameLib
 
     /*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
-    constexpr uint8_t moveOffset = 100;
-
     enum Move : uint8_t
     {
-        ONE = 101,
+        ONE = 1,
         TWO,
         THREE,
         FOUR,
@@ -203,16 +201,17 @@ namespace GameLib
             bool              gameReady_;
             string            userName_;
             asio::streambuf   inputStreamBuf_;
-            asio::streambuf   outputStreamBuf_;
             std::istream      inputStream_;
-            std::ostream      outputStream_;
+            vector<uint8_t>   inputBuffer_;
+            vector<uint8_t>   outputBuffer_;
 
         public:
             PlayerHandler(asio::io_service &service)
                 : service_(service), socket_(service), gameReady_(false),
-                  inputStream_(&inputStreamBuf_),
-                  outputStream_(&outputStreamBuf_)
+                  inputStream_(&inputStreamBuf_)
             {
+                inputBuffer_.resize(sizeof(Packet));
+                outputBuffer_.resize(sizeof(Packet));
             }
 
             tcp::socket &socket()
@@ -240,10 +239,10 @@ namespace GameLib
                          std::function<void(err, std::size_t)> cb)
             {
                 LOG_INF << "Sending packet: " << to_string(packet);
-                outputStreamBuf_.consume(sizeof(Packet));
-                outputStream_ << packet.type_;
-                outputStream_ << packet.data_;
-                asio::async_write(socket_, outputStreamBuf_.data(), cb);
+                outputBuffer_[0] = packet.type_;
+                outputBuffer_[1] = packet.data_;
+                asio::async_write(
+                    socket_, asio::buffer(outputBuffer_, sizeof(Packet)), cb);
             }
 
             void readString(std::function<void(err, std::size_t)> cb)
@@ -253,36 +252,18 @@ namespace GameLib
 
             void readMove(std::function<void(err, std::size_t)> cb)
             {
-                inputStreamBuf_.prepare(sizeof(Packet));
-                asio::async_read(socket_, inputStreamBuf_,
+                asio::async_read(socket_, asio::buffer(inputBuffer_),
                                  asio::transfer_exactly(sizeof(Packet)), cb);
             }
 
             uint8_t getMove()
             {
-                inputStreamBuf_.commit(sizeof(Packet));
                 Packet movePacket;
+                movePacket.type_ = inputBuffer_[0];
+                movePacket.data_ = inputBuffer_[1];
 
-                inputStream_ >> movePacket.type_;
-                inputStream_ >> movePacket.data_;
-
-                LOG_INF << "movePacket.type_ : " << int(movePacket.type_)
-                        << " movePacket.data_ : " << int(movePacket.data_);
-
-                if (movePacket.type_ != PacketType::DATA_PACKET)
-                {
-                    LOG_ERR << "Received packet type(" << int(movePacket.type_)
-                            << ") is not DATA_PACKET.";
-                    inputStreamBuf_.consume(sizeof(Packet));
-                    return Move::ONE; // TODO: end the game
-                }
-                else
-                {
-                    LOG_INF << "Received Data Packet: "
-                            << to_string(movePacket);
-                }
-                inputStreamBuf_.consume(sizeof(Packet));
-                return static_cast<Move>(movePacket.data_) - moveOffset;
+                // TODO: Error handling
+                return movePacket.data_;
             }
 
             void getUserName()

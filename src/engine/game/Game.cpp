@@ -74,7 +74,7 @@ namespace GameLib
     void Game::updateBoard(PlayerIdentifer id, uint8_t move)
     {
         // LOG_INF << "Game::updateBoard, move: " << int(move);
-        if (!(move <= 9 and move >= 1))
+        if ((move < 1 or move > 9))
         {
             LOG_ERR << "Cannot update the board.";
             return;
@@ -152,6 +152,14 @@ namespace GameLib
                 break;
             default:
                 sendResultToPlayers(result);
+                if(id == PlayerIdentifer::X)
+                {
+                    sendMove(PlayerIdentifer::O, move);
+                }
+                else
+                {
+                    sendMove(PlayerIdentifer::X, move);
+                }
         }
     }
 
