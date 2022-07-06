@@ -1,7 +1,16 @@
 #!/bin/bash
 
+# Go to the top level
+cd $(git rev-parse --show-toplevel)
+
 # C++ formatting
-clang-format --style=file src/server/include/Game.hpp src/server/main.cpp src/server/include/Server.hpp src/server/include/Logger.hpp src/server/include/Network.hpp src/server/include/Utilities.hpp > /dev/null
+clang-format --style=file -i src/engine/game/Game.cpp \
+                             src/engine/game/include/Game.hpp \
+                             src/engine/include/Server.hpp \
+                             src/engine/Server.cpp \
+                             src/logger/include/Logger.hpp \
+                             src/logger/Logger.cpp \
+                             src/main.cpp
 
 # Python formatting
-autopep8 -r --in-place tools/ src/client/
+autopep8 -r --in-place client/

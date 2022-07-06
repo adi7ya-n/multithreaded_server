@@ -1,0 +1,5 @@
+add_library(server Server.cpp include/Server.hpp)
+target_include_directories(server PUBLIC include/)
+add_subdirectory(game)
+target_link_libraries(server PUBLIC game)
+target_link_libraries(server PUBLIC logger)
