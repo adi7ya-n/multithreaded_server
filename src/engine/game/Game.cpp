@@ -51,23 +51,38 @@ namespace GameLib
         }
     }
 
-    void Game::sendMove(PlayerIdentifer identifer, uint8_t move)
+    void Game::sendMove(PlayerIdentifer identifer, uint8_t move,
+                        bool finalMove = false)
     {
         if (identifer == PlayerIdentifer::X)
         {
-            player1_->sendMsg(
-                Packet::create(PacketType::DATA_PACKET, move),
-                [this](err const &error, std::size_t bytes_transferred) {
-                    readMove(PlayerIdentifer::X);
-                });
+            player1_->sendMsg(Packet::create(PacketType::DATA_PACKET, move),
+                              [this, finalMove](err const  &error,
+                                                std::size_t bytes_transferred) {
+                                  if (!finalMove)
+                                  {
+                                      readMove(PlayerIdentifer::X);
+                                  }
+                                  else
+                                  {
+                                      gameOver_ = true;
+                                  }
+                              });
         }
         else
         {
-            player2_->sendMsg(
-                Packet::create(PacketType::DATA_PACKET, move),
-                [this](err const &error, std::size_t bytes_transferred) {
-                    readMove(PlayerIdentifer::O);
-                });
+            player2_->sendMsg(Packet::create(PacketType::DATA_PACKET, move),
+                              [this, finalMove](err const  &error,
+                                                std::size_t bytes_transferred) {
+                                  if (!finalMove)
+                                  {
+                                      readMove(PlayerIdentifer::O);
+                                  }
+                                  else
+                                  {
+                                      gameOver_ = true;
+                                  }
+                              });
         }
     }
 
@@ -133,47 +148,79 @@ namespace GameLib
 
     void Game::updateBoardAndCheckResult(PlayerIdentifer id, uint8_t move)
     {
-        // LOG_INF << "updateBoardAndCheckResult Read move: " << int(move);
         moveCount_++;
         updateBoard(id, move);
-        auto result = checkResult();
-        // auto result = NO_RESULT;
-        switch (result)
+        gameResult_ = checkResult();
+
+        if (gameResult_ == GameResult::NO_RESULT)
         {
-            case GameResult::NO_RESULT:
-                if (id == PlayerIdentifer::X)
-                {
-                    sendMove(PlayerIdentifer::O, move);
-                }
-                else
-                {
-                    sendMove(PlayerIdentifer::X, move);
-                }
-                break;
-            default:
-                sendResultToPlayers(result);
-                if(id == PlayerIdentifer::X)
-                {
-                    sendMove(PlayerIdentifer::O, move);
-                }
-                else
-                {
-                    sendMove(PlayerIdentifer::X, move);
-                }
+            if (id == PlayerIdentifer::X)
+            {
+                sendMove(PlayerIdentifer::O, move);
+            }
+            else
+            {
+                sendMove(PlayerIdentifer::X, move);
+            }
+        }
+        else
+        {
+            sendResultToPlayers(move);
         }
     }
 
-    void Game::sendResultToPlayers(GameResult result)
+    void Game::sendResultToPlayers(uint8_t move)
     {
-        player1_->sendMsg(
-            Packet::create(PacketType::DATA_PACKET, result),
-            [this](err const &error, std::size_t bytes_transferred) {
-                player1_->socket().close();
-            });
-        player2_->sendMsg(
-            Packet::create(PacketType::DATA_PACKET, result),
-            [this](err const &error, std::size_t bytes_transferred) {
-                player2_->socket().close();
-            });
+        switch (gameResult_)
+        {
+            case GameResult::DRAW:
+                player1_->sendMsg(
+                    Packet::create(PacketType::DATA_PACKET, gameResult_),
+                    [this](err const &error, std::size_t bytes_transferred) {
+                        player2_->sendMsg(
+                            Packet::create(PacketType::DATA_PACKET,
+                                           gameResult_),
+                            [this](err const  &error,
+                                   std::size_t bytes_transferred) {
+                                gameOver_ = true;
+                            });
+                    });
+                break;
+
+            case GameResult::X_WIN:
+                player1_->sendMsg(
+                    Packet::create(PacketType::DATA_PACKET, gameResult_),
+                    [this, move](err const  &error,
+                                 std::size_t bytes_transferred) {
+                        player2_->sendMsg(
+                            Packet::create(PacketType::DATA_PACKET,
+                                           gameResult_),
+                            [this, move](err const  &error,
+                                         std::size_t bytes_transferred) {
+                                sendMove(PlayerIdentifer::O, move, true);
+                            });
+                    });
+                break;
+
+            case GameResult::O_WIN:
+                player2_->sendMsg(
+                    Packet::create(PacketType::DATA_PACKET, gameResult_),
+                    [this, move](err const  &error,
+                                 std::size_t bytes_transferred) {
+                        player1_->sendMsg(
+                            Packet::create(PacketType::DATA_PACKET,
+                                           gameResult_),
+                            [this, move](err const  &error,
+                                         std::size_t bytes_transferred) {
+                                sendMove(PlayerIdentifer::X, move, true);
+                            });
+                    });
+                break;
+        }
+    }
+
+    bool Game::gameOver()
+    {
+        return gameOver_;
     }
 } // namespace GameLib

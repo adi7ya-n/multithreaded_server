@@ -323,8 +323,9 @@ namespace GameLib
             Board                          board_;
             std::shared_ptr<PlayerHandler> player1_, player2_;
             uint8_t                        gameId_;
-
-            uint8_t moveCount_;
+            uint8_t                        moveCount_;
+            GameResult                     gameResult_;
+            bool                           gameOver_;
 
         public:
             static constexpr uint8_t EMPTY              = 2;
@@ -339,16 +340,24 @@ namespace GameLib
                     std::fill(row.begin(), row.end(), EMPTY);
                 }
                 moveCount_ = 0;
+                gameOver_  = false;
                 setup();
+            }
+            ~Game()
+            {
+                player1_->socket().close();
+                player2_->socket().close();
+                LOG_DBG << "~Game called.";
             }
             void setup();
             void start();
             void readMove(PlayerIdentifer id);
-            void sendMove(PlayerIdentifer id, uint8_t move);
+            void sendMove(PlayerIdentifer id, uint8_t move, bool finalMove);
             void updateBoard(PlayerIdentifer id, uint8_t move);
             void updateBoardAndCheckResult(PlayerIdentifer id, uint8_t move);
-            void sendResultToPlayers(GameResult result);
+            void sendResultToPlayers(uint8_t move);
             GameResult checkResult();
+            bool       gameOver();
     };
 
     /*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/

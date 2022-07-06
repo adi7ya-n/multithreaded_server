@@ -31,6 +31,18 @@ void Server::startClientProcessor()
             else
                 it++;
         }
+
+        auto gameIter = runningGames_.begin();
+        auto lastGame = runningGames_.end();
+
+        while (gameIter != lastGame)
+        {
+            if ((*gameIter)->gameOver())
+            {
+                (*gameIter).reset();
+                gameIter = runningGames_.remove(gameIter);
+            }
+        }
     }
 }
 
