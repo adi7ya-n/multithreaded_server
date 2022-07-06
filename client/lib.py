@@ -11,7 +11,7 @@ PACKET_FORMAT = "<BB"
 
 class PacketType(Enum):
     CONN_PACKET = 0xAA
-    DATA_PACKET = 0xBB
+    DATA_PACKET = 0xFF
     ADMIN_PACKET = 0xCC
 
 
@@ -100,18 +100,27 @@ class Client:
             return True
 
     def readMove(self) -> int:
+        # return 111
         move = input("Enter a number between 1 and 9: ")
         while(not self.isValidMove(move)):
             move = input("Enter a number between 1 and 9: ")
-        return int(move) + 100
+        return int(move)
 
     def sendResponse(self):
         move = self.readMove()
-        self.socket_.send(createPacket(
-            PacketType.DATA_PACKET.value, 9))
-        # x = int(input("Enter test number: "))
+        # dontUpdate = False
+        # if move >= 9:
+        #     dontUpdate = True
         self.socket_.send(createPacket(PacketType.DATA_PACKET.value, move))
+        # if not dontUpdate:
         self.updateBoard(move, self.playerIdentifier_)
+
+    def endGame(self, result: MsgType):
+        pass
+
+    def processResult(self, result):
+        if(result == MsgType.DRAW_MATCH.value):
+            print("Draw match!!")
 
     def handleIncomingMsg(self, rawData: bytes):
         [msgType, data] = decodePacket(rawData)
@@ -133,6 +142,8 @@ class Client:
                 if(self.playerIdentifier_ == 'X'):
                     print("You won!!")
                 else:
+                    [msgType, data] = decodePacket(self.socket_.recv(2))
+                    self.updateBoard(data, self.opponentIdentifier_)
                     print("You lost :(")
                 self.gameOver_ = True
                 return
@@ -143,11 +154,13 @@ class Client:
                 if(self.playerIdentifier_ == 'O'):
                     print("You won!!")
                 else:
+                    [msgType, data] = decodePacket(self.socket_.recv(2))
+                    self.updateBoard(data, self.opponentIdentifier_)
                     print("You lost :(")
                 self.gameOver_ = True
                 return
             print("Received move from player!")
-            self.updateBoard(data-100, self.opponentIdentifier_)
+            self.updateBoard(data, self.opponentIdentifier_)
             self.sendResponse()
 
     def processServerMsg(self):
