@@ -42,6 +42,10 @@ void Server::startClientProcessor()
                 (*gameIter).reset();
                 gameIter = runningGames_.remove(gameIter);
             }
+            else
+            {
+                gameIter++;
+            }
         }
     }
 }
