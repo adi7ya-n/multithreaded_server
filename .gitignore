@@ -4,3 +4,4 @@ tags*
 *.o
 .vscode/
 build/
+client/__pycache__/
