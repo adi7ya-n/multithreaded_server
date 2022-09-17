@@ -6,7 +6,7 @@ def getGitRoot() -> str:
 
 if __name__ == "__main__":
     rootDirectory = getGitRoot()
-    print(rootDirectory)
+    #print(rootDirectory)
     logPath = rootDirectory + "/build/server.log"
     with open(logPath , mode="r+", encoding='utf-8') as f:
         lines = f.readlines()

@@ -24,10 +24,10 @@ namespace GameLib
     {
         LOG_INF << "Game started between " << player1_->userName() << " and "
                 << player2_->userName();
-        LOG_INF << "p1.unique: " << player1_.unique()
-                << " and p2.unique: " << player2_.unique();
-        LOG_INF << "p1.use_count: " << player1_.use_count()
-                << " , p2.use_count: " << player2_.use_count();
+        // LOG_INF << "p1.unique: " << player1_.unique()
+        //         << " and p2.unique: " << player2_.unique();
+        // LOG_INF << "p1.use_count: " << player1_.use_count()
+        //         << " , p2.use_count: " << player2_.use_count();
         readMove(PlayerIdentifer::X);
     }
 
@@ -232,6 +232,9 @@ namespace GameLib
                             });
                     });
                 break;
+
+            case GameResult::NO_RESULT:
+                LOG_ERR << "sendResultToPlayers called with arg: NO_RESULT";
         }
     }
 

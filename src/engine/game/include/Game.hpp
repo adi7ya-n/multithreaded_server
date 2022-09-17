@@ -123,6 +123,8 @@ namespace GameLib
                 return "X_WIN";
             case GameResult::O_WIN:
                 return "O_WIN";
+            case GameResult::NO_RESULT:
+                return "NO_RESULT";
         }
     }
 
@@ -237,7 +239,7 @@ namespace GameLib
             void sendMsg(Packet                                packet,
                          std::function<void(err, std::size_t)> cb)
             {
-                LOG_INF << "Sending packet: " << to_string(packet);
+                // LOG_INF << "Sending packet: " << to_string(packet);
                 outputBuffer_[0] = packet.type_;
                 outputBuffer_[1] = packet.data_;
                 asio::async_write(

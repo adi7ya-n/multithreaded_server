@@ -35,7 +35,7 @@ def createPacket(type, data):
 
 
 def decodePacket(rawData: bytes):
-    print("Received raw data: ", rawData)
+    #print("Received raw data: ", rawData)
     return struct.unpack(PACKET_FORMAT, rawData)
 
 
@@ -67,12 +67,12 @@ class Client:
         else:
             rowNum = int(move / 3) - 1
         colNum = move - 3 * rowNum - 1
-        print("R,C: ", rowNum, colNum)
+        #print("R,C: ", rowNum, colNum)
         return (rowNum, colNum)
 
     def isLocationOccupied(self, move):
         (rowNum, colNum) = self.getPosition(move)
-        if(self.board_[rowNum][colNum] != '-'):
+        if (self.board_[rowNum][colNum] != '-'):
             return True
         else:
             return False
@@ -87,13 +87,13 @@ class Client:
         return move.isdigit()
 
     def isValidMove(self, move):
-        if(not self.isInteger(move)):
+        if (not self.isInteger(move)):
             print("Entered value is not a number.")
             return False
-        elif(not (1 <= int(move) <= 9)):
+        elif (not (1 <= int(move) <= 9)):
             print("Entered value is not in the range 1 to 9.")
             return False
-        elif(self.isLocationOccupied(int(move))):
+        elif (self.isLocationOccupied(int(move))):
             print("Location is already occupied.")
             return False
         else:
@@ -102,7 +102,7 @@ class Client:
     def readMove(self) -> int:
         # return 111
         move = input("Enter a number between 1 and 9: ")
-        while(not self.isValidMove(move)):
+        while (not self.isValidMove(move)):
             move = input("Enter a number between 1 and 9: ")
         return int(move)
 
@@ -119,27 +119,27 @@ class Client:
         pass
 
     def processResult(self, result):
-        if(result == MsgType.DRAW_MATCH.value):
+        if (result == MsgType.DRAW_MATCH.value):
             print("Draw match!!")
 
     def handleIncomingMsg(self, rawData: bytes):
         [msgType, data] = decodePacket(rawData)
-        print("RECVD MSG FROM SERVER: MsgType: ", msgType, " data: ", data)
-        if(msgType == PacketType.CONN_PACKET.value):
-            if(data == MsgType.USERNAME_REQUEST.value):
+        #print("RECVD MSG FROM SERVER: MsgType: ", msgType, " data: ", data)
+        if (msgType == PacketType.CONN_PACKET.value):
+            if (data == MsgType.USERNAME_REQUEST.value):
                 self.sendUsername()
-            elif(data == MsgType.PLAYER1_INDICATION.value):
+            elif (data == MsgType.PLAYER1_INDICATION.value):
                 print("You are X!")
                 self.opponentIdentifier_ = 'O'
                 self.sendResponse()
-            elif(data == MsgType.PLAYER2_INDICATION.value):
+            elif (data == MsgType.PLAYER2_INDICATION.value):
                 self.playerIdentifier_ = 'O'
                 self.opponentIdentifier_ = 'X'
                 print("You are O!")
 
-        elif(msgType == PacketType.DATA_PACKET.value):
-            if(data == MsgType.X_WINS.value):
-                if(self.playerIdentifier_ == 'X'):
+        elif (msgType == PacketType.DATA_PACKET.value):
+            if (data == MsgType.X_WINS.value):
+                if (self.playerIdentifier_ == 'X'):
                     print("You won!!")
                 else:
                     [msgType, data] = decodePacket(self.socket_.recv(2))
@@ -147,11 +147,11 @@ class Client:
                     print("You lost :(")
                 self.gameOver_ = True
                 return
-            elif(data == MsgType.DRAW_MATCH.value):
+            elif (data == MsgType.DRAW_MATCH.value):
                 print("Draw match!!")
                 self.gameOver_ = True
-            elif(data == MsgType.O_WINS.value):
-                if(self.playerIdentifier_ == 'O'):
+            elif (data == MsgType.O_WINS.value):
+                if (self.playerIdentifier_ == 'O'):
                     print("You won!!")
                 else:
                     [msgType, data] = decodePacket(self.socket_.recv(2))
