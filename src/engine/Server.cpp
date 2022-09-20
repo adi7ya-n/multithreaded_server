@@ -1,7 +1,5 @@
 #include "Server.hpp"
 
-/*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-
 void Server::startClientProcessor()
 {
     while (!shutDownCommand_)
@@ -50,8 +48,6 @@ void Server::startClientProcessor()
     }
 }
 
-/*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-
 void Server::startServer(uint16_t port)
 {
     port_ = port;
@@ -83,8 +79,6 @@ void Server::startServer(uint16_t port)
     startClientProcessor();
 }
 
-/*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-
 void Server::handleNewConnection(const std::shared_ptr<PlayerHandler> &handler,
                                  err const                            &error)
 {
@@ -108,12 +102,8 @@ void Server::handleNewConnection(const std::shared_ptr<PlayerHandler> &handler,
     }
 }
 
-/*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-
 void Server::startGame(std::shared_ptr<PlayerHandler> &player1,
                        std::shared_ptr<PlayerHandler> &player2)
 {
     runningGames_.insert(std::make_shared<Game>(player1, player2));
 }
-
-/*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/

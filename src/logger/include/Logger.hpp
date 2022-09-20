@@ -24,8 +24,6 @@
 #include <boost/log/utility/record_ordering.hpp>
 #include <boost/log/support/date_time.hpp>
 
-/*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-
 namespace logging  = boost::log;
 namespace attrs    = logging::attributes;
 namespace src      = logging::sources;
@@ -52,8 +50,6 @@ BOOST_LOG_INLINE_GLOBAL_LOGGER_DEFAULT(
 #define LOG_DBG BOOST_LOG_SEV(lg, DEBUG)
 #define LOG_ERR BOOST_LOG_SEV(lg, ERR)
 
-/*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-
 namespace Logging
 {
     typedef sinks::text_ostream_backend backend_t;
@@ -67,5 +63,3 @@ namespace Logging
     void                      flushLogs();
 } // namespace Logging
 #endif
-
-/*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
